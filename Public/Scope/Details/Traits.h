@@ -9,7 +9,7 @@ namespace stdx {
 }
 
 namespace stdx::details {
-    using EmptyScope = ScopeExit<void (*)()>;
+    using EmptyScope = ScopeExit<void()>;
 
     template <typename T>
     using TypeIdentity = T;

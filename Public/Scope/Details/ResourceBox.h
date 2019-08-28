@@ -10,6 +10,10 @@ namespace stdx::details {
         template <typename U = T, typename std::enable_if_t<std::is_default_constructible_v<U>, int> = 0>
         BaseResourceBox() noexcept(std::is_nothrow_default_constructible_v<T>) : Data() {}
 
+        template <typename U, typename std::enable_if_t<std::is_constructible_v<T, U>, int> = 0>
+        explicit BaseResourceBox(std::in_place_t, U&& Data) noexcept(std::is_nothrow_constructible_v<T, U>) :
+            Data(std::forward<U>(Data)) {}
+
         template <typename U, typename F, typename std::enable_if_t<std::is_constructible_v<T, U>, int> = 0>
         explicit BaseResourceBox(std::in_place_t, U&& Data, ScopeExit<F>&& Scope) noexcept(
             std::is_nothrow_constructible_v<T, U>) :
@@ -33,6 +37,11 @@ namespace stdx::details {
         using Super = BaseResourceBox<T>;
         using Super::Super;
 
+        ResourceBoxMove() = default;
+
+        ResourceBoxMove(ResourceBoxMove&& Other) noexcept(std::is_nothrow_copy_constructible_v<T>) :
+            Super(std::in_place, std::as_const(Other.Data)) {}
+
         template <typename F>
         ResourceBoxMove(ResourceBoxMove&& Other, ScopeExit<F>&& Scope) noexcept(std::is_nothrow_copy_constructible_v<T>) :
             Super(std::in_place, std::as_const(Other.Data), std::move(Scope)) {}
@@ -43,8 +52,12 @@ namespace stdx::details {
         using Super = BaseResourceBox<T>;
         using Super::Super;
 
+        ResourceBoxMove() = default;
+
+        ResourceBoxMove(ResourceBoxMove&& Other) noexcept : Super(std::in_place, std::move(Other.Data)) {}
+
         template <typename F>
-        ResourceBoxMove(ResourceBoxMove&& Other, ScopeExit<F>&& Scope) noexcept :
+        ResourceBoxMove(ResourceBoxMove&& Other, ScopeExit<F>&& Scope) noexcept(std::is_nothrow_copy_constructible_v<T>) :
             Super(std::in_place, std::move(Other.Data), std::move(Scope)) {}
     };
 
@@ -52,6 +65,10 @@ namespace stdx::details {
     struct ResourceBoxMoveAssign : ResourceBoxMove<T> {
         using Super = ResourceBoxMove<T>;
         using Super::Super;
+
+        ResourceBoxMoveAssign() = default;
+
+        ResourceBoxMoveAssign(ResourceBoxMoveAssign&&) = default;
 
         ResourceBoxMoveAssign& operator=(ResourceBoxMoveAssign&& Other) noexcept(std::is_nothrow_copy_assignable_v<T>) {
             Super::Data = std::as_const(Other.Data);
@@ -63,6 +80,10 @@ namespace stdx::details {
     struct ResourceBoxMoveAssign<T, true> : ResourceBoxMove<T> {
         using Super = ResourceBoxMove<T>;
         using Super::Super;
+
+        ResourceBoxMoveAssign() = default;
+
+        ResourceBoxMoveAssign(ResourceBoxMoveAssign&&) = default;
 
         ResourceBoxMoveAssign& operator=(ResourceBoxMoveAssign&& Other) noexcept {
             Super::Data = std::move(Other.Data);

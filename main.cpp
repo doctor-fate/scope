@@ -1,7 +1,6 @@
 #include <cstdio>
 #include <iostream>
 
-#include <Scope/Details/ResourceBox.h>
 #include <Scope/Scope.h>
 #include <Scope/UniqueResource.h>
 
@@ -25,8 +24,7 @@ struct A {
     int x = 0;
 };
 
-void f()
-{
+void f() {
     std::cout << "f()\n";
 }
 
@@ -43,14 +41,17 @@ int main() {
     std::string a = "hello";
     auto x = [](std::string_view p) {
     };
-    stdx::UniqueResource b1(std::string("hello"), std::cref(x));
+    stdx::UniqueResource b1(std::string("hello"), std::cref(x)), b2(std::move(b1));
     b1.Reset(std::string_view("world!"));
+    b2 = std::move(b1);
 
     stdx::ScopeSuccess s([&a]() { std::cout << a << '\n'; });
 
-    auto file = stdx::MakeUniqueResourceChecked(std::fopen("potentially_nonexistent_file.txt", "r"), nullptr, [](auto f) {
-        std::fclose(f);
-    });
+    auto file = stdx::MakeUniqueResourceChecked(
+             std::fopen("potentially_nonexistent_file.txt", "r"),
+             nullptr,
+             [](auto f) { std::fclose(f); }),
+         f2(std::move(file));
 
     return 0;
 }
