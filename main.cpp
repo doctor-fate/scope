@@ -25,10 +25,15 @@ struct A {
     int x = 0;
 };
 
+void f()
+{
+    std::cout << "f()\n";
+}
+
 int main() {
     A a1(6), a2(5), a3(10);
     try {
-        stdx::ScopeExit<const A> s1(std::move(a1));
+        stdx::ScopeExit<void()> s1(f);
         stdx::ScopeSuccess s2(std::cref(a2));
         stdx::ScopeFail s3(a3);
         a2.x = 56;
@@ -36,12 +41,16 @@ int main() {
     }
 
     std::string a = "hello";
-    auto x = [](auto p) {
-        std::free(p);
+    auto x = [](std::string_view p) {
     };
-    stdx::UniqueResource b1(malloc(10), std::cref(x));
+    stdx::UniqueResource b1(std::string("hello"), std::cref(x));
+    b1.Reset(std::string_view("world!"));
 
     stdx::ScopeSuccess s([&a]() { std::cout << a << '\n'; });
+
+    auto file = stdx::MakeUniqueResourceChecked(std::fopen("potentially_nonexistent_file.txt", "r"), nullptr, [](auto f) {
+        std::fclose(f);
+    });
 
     return 0;
 }

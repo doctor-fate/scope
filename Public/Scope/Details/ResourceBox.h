@@ -1,8 +1,5 @@
 #pragma once
 
-#include <functional>
-#include <type_traits>
-
 #include <Scope/Scope.h>
 
 namespace stdx::details {
@@ -74,13 +71,18 @@ namespace stdx::details {
     };
 
     template <typename T>
-    struct ResourceBox : ResourceBoxMoveAssign<std::decay_t<T>> {
-        using Super = ResourceBoxMoveAssign<std::decay_t<T>>;
+    using SelectBaseMoveAssign = std::conditional_t<
+        std::is_nothrow_move_assignable_v<T> || std::is_copy_assignable_v<T>,
+        ResourceBoxMoveAssign<T>,
+        ResourceBoxMove<T>>;
+
+    template <typename T>
+    struct ResourceBox : SelectBaseMoveAssign<std::decay_t<T>> {
+        using Super = SelectBaseMoveAssign<std::decay_t<T>>;
         using Super::Super;
         using typename Super::Type;
 
         static_assert(std::is_nothrow_move_constructible_v<Type> || std::is_copy_constructible_v<Type>);
-        static_assert(std::is_nothrow_move_assignable_v<Type> || std::is_copy_assignable_v<Type>);
         static_assert(std::is_destructible_v<Type>);
 
         decltype(auto) Get() const noexcept {

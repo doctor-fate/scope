@@ -2,6 +2,13 @@
 
 #include "Scope/Details/ResourceBox.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+    #define MAKE_UNIQUE_RESOURCE_CHECKED_NOEXCEPT(R, D)                                                                          \
+        noexcept(std::is_nothrow_constructible_v<std::decay_t<R>, R> && std::is_nothrow_constructible_v<std::decay_t<D>, D>)
+#else
+    #define MAKE_UNIQUE_RESOURCE_CHECKED_NOEXCEPT(R, D)
+#endif
+
 namespace stdx {
     template <typename R, typename D>
     class UniqueResource {
@@ -13,15 +20,14 @@ namespace stdx {
 
         static_assert(std::is_invocable_v<D1&, decltype(std::declval<TResource&>().Get())>);
 
-        static constexpr auto NoexceptMoveConstructible =
-            std::is_nothrow_constructible_v<TResource, TResource&&, details::EmptyScope> &&
-            std::is_nothrow_constructible_v<TDeleter, TDeleter&&, details::EmptyScope>;
-
-        static constexpr auto NoexceptMoveAssignable = std::is_nothrow_move_assignable_v<TResource> &&
-                                                       std::is_nothrow_move_assignable_v<TDeleter>;
+        template <typename T>
+        static constexpr bool NoExceptMoveConstructible = std::is_nothrow_constructible_v<T, T&&, details::EmptyScope>;
 
         template <typename T>
-        static constexpr auto ResourceNoexceptAssignable =
+        static constexpr bool NoExceptMoveAssignable = std::is_nothrow_move_assignable_v<T>;
+
+        template <typename T>
+        static constexpr bool ResourceNoExceptAssignable =
             std::is_nothrow_assignable_v<R1&, T> ||
             std::is_nothrow_assignable_v<R1&, decltype(std::as_const(std::declval<T&>()))>;
 
@@ -35,9 +41,8 @@ namespace stdx {
             typename CD = details::ResourceConstructible<TDeleter, D2>,
             typename std::enable_if_t<CR::Enable && CD::Enable, int> = 0>
         UniqueResource(R2&& Resource, D2&& Deleter) noexcept(CR::NoExcept&& CD::NoExcept) :
-            Resource(std::in_place, std::forward<typename CR::Type>(Resource), ScopeExit([&Resource, &Deleter]() {
-                         std::invoke(Deleter, Resource);
-                     })),
+            Resource(
+                std::in_place, std::forward<typename CR::Type>(Resource), ScopeExit([&]() { std::invoke(Deleter, Resource); })),
             Deleter(std::in_place, std::forward<typename CD::Type>(Deleter), ScopeExit([this, &Deleter]() {
                         std::invoke(Deleter, this->Resource.Get());
                     })),
@@ -46,16 +51,18 @@ namespace stdx {
             static_assert(std::is_invocable_v<D2&, decltype(std::declval<TResource&>().Get())>);
         }
 
-        UniqueResource(UniqueResource&& Other) noexcept(NoexceptMoveConstructible) :
-            Resource(std::move(Other.Resource), EmptyScope()),
-            Deleter(std::move(Other.Deleter), MoveScope(Other)),
+        UniqueResource(UniqueResource&& Other) noexcept(
+            NoExceptMoveConstructible<TResource>&& NoExceptMoveConstructible<TDeleter>) :
+            Resource(std::move(Other.Resource), GetEmptyScope()),
+            Deleter(std::move(Other.Deleter), GetSafeMoveScope(Other)),
             bExecuteOnReset(Other.bExecuteOnReset) {}
 
         ~UniqueResource() {
             Reset();
         }
 
-        UniqueResource& operator=(UniqueResource&& Other) noexcept(NoexceptMoveAssignable) {
+        UniqueResource&
+        operator=(UniqueResource&& Other) noexcept(NoExceptMoveAssignable<TResource>&& NoExceptMoveAssignable<TDeleter>) {
             Reset();
             if constexpr (std::is_nothrow_move_assignable_v<TResource> && !std::is_nothrow_move_assignable_v<TDeleter>) {
                 Deleter = std::move(Other.Deleter);
@@ -83,7 +90,7 @@ namespace stdx {
             typename std::enable_if_t<
                 std::is_nothrow_assignable_v<R1&, T> || std::is_assignable_v<R1&, decltype(std::as_const(std::declval<T&>()))>,
                 int> = 0>
-        void Reset(T&& Value) noexcept(ResourceNoexceptAssignable<T>) {
+        void Reset(T&& Value) noexcept(ResourceNoExceptAssignable<T>) {
             static_assert(std::is_invocable_v<D1&, T&>);
 
             Reset();
@@ -91,8 +98,9 @@ namespace stdx {
             if constexpr (std::is_nothrow_assignable_v<R1&, T>) {
                 Resource.Get() = std::forward<T>(Value);
             } else {
-                ScopeFail Scope([this, &Value]() { std::invoke(Deleter.Get(), Value); });
+                ScopeExit Scope([this, &Value]() { std::invoke(Deleter.Get(), Value); });
                 Resource.Get() = std::as_const(Value);
+                Scope.Release();
             }
             bExecuteOnReset = true;
         }
@@ -118,11 +126,37 @@ namespace stdx {
         }
 
     private:
-        static auto EmptyScope() noexcept {
+        template <typename R2, typename D2, typename S>
+        friend auto MakeUniqueResourceChecked(R2&& Resource, const S& Sentinel, D2&& Deleter)
+            MAKE_UNIQUE_RESOURCE_CHECKED_NOEXCEPT(R2, D2);
+
+        static auto GetEmptyScope() noexcept {
             return ScopeExit([]() {});
         }
 
-        auto MoveScope(UniqueResource& Other) noexcept {
+        template <
+            typename R2,
+            typename D2,
+            typename CR = details::ResourceConstructible<TResource, R2>,
+            typename CD = details::ResourceConstructible<TDeleter, D2>,
+            typename std::enable_if_t<CR::Enable && CD::Enable, int> = 0>
+        UniqueResource(R2&& Resource, D2&& Deleter, bool bExecuteOnReset) noexcept(CR::NoExcept&& CD::NoExcept) :
+            Resource(std::in_place, std::forward<typename CR::Type>(Resource), ScopeExit([&]() {
+                         if (bExecuteOnReset) {
+                             std::invoke(Deleter, Resource);
+                         }
+                     })),
+            Deleter(std::in_place, std::forward<typename CD::Type>(Deleter), ScopeExit([this, &Deleter, bExecuteOnReset]() {
+                        if (bExecuteOnReset) {
+                            std::invoke(Deleter, this->Resource.Get());
+                        }
+                    })),
+            bExecuteOnReset(bExecuteOnReset) {
+            static_assert(std::is_invocable_v<D2&, R2>);
+            static_assert(std::is_invocable_v<D2&, decltype(std::declval<TResource&>().Get())>);
+        }
+
+        auto GetSafeMoveScope(UniqueResource& Other) noexcept {
             return ScopeExit([this, &Other]() {
                 if constexpr (std::is_nothrow_move_constructible_v<R1>) {
                     if (Other.bExecuteOnReset) {
@@ -140,4 +174,14 @@ namespace stdx {
 
     template <typename R, typename D>
     UniqueResource(R, D)->UniqueResource<R, D>;
+
+    template <typename R, typename D>
+    UniqueResource(R, D, bool)->UniqueResource<R, D>;
+
+    template <typename R, typename D, typename S = std::decay_t<R>>
+    auto MakeUniqueResourceChecked(R&& Resource, const S& Sentinel, D&& Deleter) MAKE_UNIQUE_RESOURCE_CHECKED_NOEXCEPT(R, D) {
+        return UniqueResource(std::forward<R>(Resource), std::forward<D>(Deleter), !bool(Resource == Sentinel));
+    }
 }
+
+#undef MAKE_UNIQUE_RESOURCE_CHECKED_NOEXCEPT

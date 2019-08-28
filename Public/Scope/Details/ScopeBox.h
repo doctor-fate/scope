@@ -9,6 +9,8 @@ namespace stdx::details {
     struct BaseScopeBox {
         using Type = TypeIdentity<T>;
 
+        static_assert(std::is_invocable_v<Type&>);
+
         template <typename U, std::enable_if_t<std::is_constructible_v<T, U>, int> = 0>
         explicit BaseScopeBox(std::in_place_t, U&& Data) noexcept(std::is_nothrow_constructible_v<T, U>) :
             Data(std::forward<U>(Data)) {}
@@ -51,7 +53,6 @@ namespace stdx::details {
         using Super::Super;
         using typename Super::Type;
 
-        static_assert(std::is_invocable_v<Type&>);
         static_assert(std::is_nothrow_move_constructible_v<Type> || std::is_copy_constructible_v<Type>);
         static_assert(std::is_destructible_v<Type>);
     };
@@ -61,7 +62,5 @@ namespace stdx::details {
         using Super = ScopeBoxMove<std::reference_wrapper<T>>;
         using Super::Super;
         using typename Super::Type;
-
-        static_assert(std::is_invocable_v<Type&>);
     };
 }
