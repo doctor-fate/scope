@@ -73,9 +73,9 @@ IncludeCategories:
       Priority:        2
     - Regex:           '<[a-z_]+>'
       Priority:        1
-    - Regex:           '<Expected/.+\.hpp>'
+    - Regex:           '<Scope/.+\.h>'
       Priority:        3
-    - Regex:           '"Expected/.+\.hpp"'
+    - Regex:           '"Scope/.+\.h"'
       Priority:        4
     - Regex:           '.*'
       Priority:        5
