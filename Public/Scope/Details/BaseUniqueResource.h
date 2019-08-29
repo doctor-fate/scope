@@ -17,6 +17,11 @@ namespace stdx::details {
 
         static_assert(std::is_invocable_v<D1&, decltype(std::declval<TResource&>().Get())>);
 
+        template <typename... T1, typename... T2>
+        static constexpr bool IsNoExceptConstructible(TypePack<T1...>, TypePack<T2...>) noexcept {
+            return std::is_nothrow_constructible_v<TResource, T1...> && std::is_nothrow_constructible_v<TDestruct, T2...>;
+        }
+
         static constexpr bool IsAssignable() noexcept {
             return std::is_move_assignable_v<TResource> && std::is_move_assignable_v<TDestruct>;
         }
@@ -26,18 +31,20 @@ namespace stdx::details {
         }
 
         static constexpr bool IsResourceMoveNoExcept() noexcept {
-            return std::is_nothrow_constructible_v<TResource, TResource&&, EmptyScope>;
+            return std::is_nothrow_move_constructible_v<TResource>;
         }
 
         static constexpr bool IsDestructMoveNoExcept() noexcept {
-            return std::is_nothrow_constructible_v<TDestruct, TDestruct&&, EmptyScope>;
+            return std::is_nothrow_move_constructible_v<TDestruct>;
         }
 
         BaseUniqueResource() = default;
 
         template <typename... T1, typename... T2>
-        BaseUniqueResource(std::tuple<T1...>&& Resource, std::tuple<T2...>&& Destruct, bool bExecuteOnReset) :
-            Data(std::piecewise_construct, std::move(Resource), std::move(Destruct)), bExecuteOnReset(bExecuteOnReset) {}
+        BaseUniqueResource(std::tuple<T1...>&& Resource, std::tuple<T2...>&& Destruct, bool bExecuteOnReset) noexcept(
+            IsNoExceptConstructible(details::TypePack<T1...>{}, details::TypePack<T2...>{})) :
+            Data(std::piecewise_construct, std::move(Resource), std::move(Destruct)),
+            bExecuteOnReset(bExecuteOnReset) {}
 
         BaseUniqueResource(const BaseUniqueResource&) = delete;
 

@@ -55,10 +55,6 @@ namespace stdx::details {
         ResourceBoxMove() = default;
 
         ResourceBoxMove(ResourceBoxMove&& Other) noexcept : Super(std::in_place, std::move(Other.Data)) {}
-
-        template <typename F>
-        ResourceBoxMove(ResourceBoxMove&& Other, ScopeExit<F>&& Scope) noexcept(std::is_nothrow_copy_constructible_v<T>) :
-            Super(std::in_place, std::move(Other.Data), std::move(Scope)) {}
     };
 
     template <typename T, bool = std::is_nothrow_move_assignable_v<T>>
