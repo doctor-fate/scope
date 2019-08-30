@@ -80,10 +80,10 @@ namespace stdx::details {
             Reset();
 
             if constexpr (std::is_nothrow_assignable_v<R1&, T>) {
-                Resource().Get() = std::forward<T>(Value);
+                Resource() = std::forward<T>(Value);
             } else {
                 ScopeExit Scope([this, &Value]() { std::invoke(Destruct().Get(), Value); });
-                Resource().Get() = std::as_const(Value);
+                Resource() = std::as_const(Value);
                 Scope.Release();
             }
 

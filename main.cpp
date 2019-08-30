@@ -38,12 +38,13 @@ int main() {
     } catch (...) {
     }
 
-    std::string a = "hello";
-    auto x = [](std::string_view p) {
+    std::string a = "hello", b = "world";
+    auto x = [](std::string& p) {
     };
-    stdx::UniqueResource b1(std::string("hello"), std::cref(x)), b2(std::move(b1));
-    b1.Reset(std::string_view("world!"));
+    stdx::UniqueResource<std::string&, decltype(std::cref(x))> b1(a, std::cref(x)), b2(std::move(b1));
+    b1.Reset(b);
     b2 = std::move(b1);
+    std::string& i = b2.Get();
 
     stdx::ScopeSuccess s([&a]() { std::cout << a << '\n'; });
 

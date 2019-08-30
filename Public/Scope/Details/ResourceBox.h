@@ -7,6 +7,16 @@ namespace stdx::details {
     struct BaseResourceBox {
         using Type = TypeIdentity<T>;
 
+        template <typename U>
+        static U& GetRef(U& Value) noexcept {
+            return Value;
+        }
+
+        template <typename U>
+        static U& GetRef(std::reference_wrapper<U> Value) noexcept {
+            return Value.get();
+        }
+
         template <typename U = T, typename std::enable_if_t<std::is_default_constructible_v<U>, int> = 0>
         BaseResourceBox() noexcept(std::is_nothrow_default_constructible_v<T>) : Data() {}
 
@@ -28,6 +38,10 @@ namespace stdx::details {
         BaseResourceBox& operator=(const BaseResourceBox&) = delete;
 
         BaseResourceBox& operator=(BaseResourceBox&&) = delete;
+
+        decltype(auto) Get() const noexcept {
+            return GetRef(Data);
+        }
 
         Type Data;
     };
@@ -102,23 +116,17 @@ namespace stdx::details {
         static_assert(std::is_nothrow_move_constructible_v<Type> || std::is_copy_constructible_v<Type>);
         static_assert(std::is_destructible_v<Type>);
 
-        decltype(auto) Get() const noexcept {
-            return (Super::Data);
-        }
-
-        decltype(auto) Get() noexcept {
-            return (Super::Data);
+        template <typename U, typename std::enable_if_t<std::is_assignable_v<Type, U>, int> = 0>
+        ResourceBox& operator=(U&& Value) noexcept(std::is_nothrow_assignable_v<Type, U>) {
+            Super::Data = std::forward<U>(Value);
+            return *this;
         }
     };
 
     template <typename T>
-    struct ResourceBox<T&> : ResourceBoxMoveAssign<std::reference_wrapper<T>> {
-        using Super = ResourceBoxMoveAssign<std::reference_wrapper<T>>;
+    struct ResourceBox<T&> : ResourceBox<std::reference_wrapper<T>> {
+        using Super = ResourceBox<std::reference_wrapper<T>>;
         using Super::Super;
-        using typename Super::Type;
-
-        decltype(auto) Get() const noexcept {
-            return Super::Data.get();
-        }
+        using Super::operator=;
     };
 }
