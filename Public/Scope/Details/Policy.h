@@ -10,6 +10,8 @@ namespace stdx::details {
         using Super = ScopeBox<T>;
         using Super::Super;
 
+        ExitPolicy(ExitPolicy&&) = default;
+
         void Release() noexcept {
             bExecuteOnDestruction = false;
         }
@@ -28,6 +30,8 @@ namespace stdx::details {
         using Super = ScopeBox<T>;
         using Super::Super;
 
+        SuccessPolicy(SuccessPolicy&&) = default;
+
         void Release() noexcept {
             UnchaughtOnCreation = -1;
         }
@@ -45,6 +49,8 @@ namespace stdx::details {
     struct FailPolicy : ScopeBox<T> {
         using Super = ScopeBox<T>;
         using Super::Super;
+
+        FailPolicy(FailPolicy&&) = default;
 
         void Release() noexcept {
             UnchaughtOnCreation = std::numeric_limits<int>::max();

@@ -36,7 +36,7 @@ namespace stdx::details {
         static constexpr bool NoExcept = true;
     };
 
-    template <typename Box, typename U, bool = std::is_nothrow_constructible_v<Box, std::in_place_t, U, EmptyScope>>
+    template <typename Box, typename U, bool = std::is_nothrow_constructible_v<Box, std::in_place_t, U>>
     struct ResourceConstructible {
         using Type = decltype(std::as_const(std::declval<U&>()));
 

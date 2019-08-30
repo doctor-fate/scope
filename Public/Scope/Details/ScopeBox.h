@@ -48,7 +48,7 @@ namespace stdx::details {
     };
 
     template <typename T>
-    struct ScopeBox : public ScopeBoxMove<std::decay_t<T>> {
+    struct ScopeBox : ScopeBoxMove<std::decay_t<T>> {
         using Super = ScopeBoxMove<std::decay_t<T>>;
         using Super::Super;
         using typename Super::Type;
@@ -58,7 +58,7 @@ namespace stdx::details {
     };
 
     template <typename T>
-    struct ScopeBox<T&> : public ScopeBoxMove<std::reference_wrapper<T>> {
+    struct ScopeBox<T&> : ScopeBoxMove<std::reference_wrapper<T>> {
         using Super = ScopeBoxMove<std::reference_wrapper<T>>;
         using Super::Super;
         using typename Super::Type;
