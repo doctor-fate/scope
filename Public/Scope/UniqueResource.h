@@ -40,7 +40,9 @@ namespace stdx {
             return Super::Destruct().Get();
         }
 
-        template <typename T = R1, typename std::enable_if_t<std::is_pointer_v<T>, int> = 0>
+        template <
+            typename T = R1,
+            typename std::enable_if_t<std::is_pointer_v<T> && !std::is_void_v<std::remove_pointer_t<T>>, int> = 0>
         [[nodiscard]] auto operator->() const noexcept {
             return Get();
         }
