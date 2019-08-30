@@ -11,7 +11,7 @@ AlignTrailingComments: true
 AllowAllConstructorInitializersOnNextLine: false
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
-AllowShortBlocksOnASingleLine: false
+AllowShortBlocksOnASingleLine: Empty
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
@@ -68,6 +68,7 @@ PenaltyBreakAssignment: 200
 PenaltyBreakBeforeFirstCallParameter: 30
 PenaltyReturnTypeOnItsOwnLine: 50
 FixNamespaceComments: false
+SpaceInEmptyBlock: true
 IncludeCategories:
     - Regex:           '<gtest/.+>|"gtest/.+"'
       Priority:        2

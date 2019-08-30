@@ -13,7 +13,7 @@ namespace stdx::details {
 
         template <typename U, std::enable_if_t<std::is_constructible_v<T, U>, int> = 0>
         explicit BaseScopeBox(std::in_place_t, U&& Data) noexcept(std::is_nothrow_constructible_v<T, U>) :
-            Data(std::forward<U>(Data)) {}
+            Data(std::forward<U>(Data)) { }
 
         BaseScopeBox(const BaseScopeBox&) = delete;
 
@@ -36,7 +36,7 @@ namespace stdx::details {
         using Super::Super;
 
         ScopeBoxMove(ScopeBoxMove&& Other) noexcept(std::is_nothrow_copy_constructible_v<T>) :
-            Super(std::in_place, std::as_const(Other.Data)) {}
+            Super(std::in_place, std::as_const(Other.Data)) { }
     };
 
     template <typename T>
@@ -44,7 +44,7 @@ namespace stdx::details {
         using Super = BaseScopeBox<T>;
         using Super::Super;
 
-        ScopeBoxMove(ScopeBoxMove&& Other) noexcept : Super(std::in_place, std::move(Other.Data)) {}
+        ScopeBoxMove(ScopeBoxMove&& Other) noexcept : Super(std::in_place, std::move(Other.Data)) { }
     };
 
     template <typename T>

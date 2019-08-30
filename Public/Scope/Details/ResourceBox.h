@@ -18,11 +18,11 @@ namespace stdx::details {
         }
 
         template <typename U = T, typename std::enable_if_t<std::is_default_constructible_v<U>, int> = 0>
-        BaseResourceBox() noexcept(std::is_nothrow_default_constructible_v<T>) : Data() {}
+        BaseResourceBox() noexcept(std::is_nothrow_default_constructible_v<T>) : Data() { }
 
         template <typename U, typename std::enable_if_t<std::is_constructible_v<T, U>, int> = 0>
         explicit BaseResourceBox(std::in_place_t, U&& Data) noexcept(std::is_nothrow_constructible_v<T, U>) :
-            Data(std::forward<U>(Data)) {}
+            Data(std::forward<U>(Data)) { }
 
         template <typename U, typename F, typename std::enable_if_t<std::is_constructible_v<T, U>, int> = 0>
         explicit BaseResourceBox(std::in_place_t, U&& Data, ScopeExit<F>&& Scope) noexcept(
@@ -54,11 +54,11 @@ namespace stdx::details {
         ResourceBoxMove() = default;
 
         ResourceBoxMove(ResourceBoxMove&& Other) noexcept(std::is_nothrow_copy_constructible_v<T>) :
-            Super(std::in_place, std::as_const(Other.Data)) {}
+            Super(std::in_place, std::as_const(Other.Data)) { }
 
         template <typename F>
         ResourceBoxMove(ResourceBoxMove&& Other, ScopeExit<F>&& Scope) noexcept(std::is_nothrow_copy_constructible_v<T>) :
-            Super(std::in_place, std::as_const(Other.Data), std::move(Scope)) {}
+            Super(std::in_place, std::as_const(Other.Data), std::move(Scope)) { }
     };
 
     template <typename T>
@@ -68,7 +68,7 @@ namespace stdx::details {
 
         ResourceBoxMove() = default;
 
-        ResourceBoxMove(ResourceBoxMove&& Other) noexcept : Super(std::in_place, std::move(Other.Data)) {}
+        ResourceBoxMove(ResourceBoxMove&& Other) noexcept : Super(std::in_place, std::move(Other.Data)) { }
     };
 
     template <typename T, bool = std::is_nothrow_move_assignable_v<T>>

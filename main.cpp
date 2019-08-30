@@ -7,7 +7,7 @@
 struct A {
     A() = default;
 
-    A(int x) : x(x) {}
+    A(int x) : x(x) { }
 
     A(const A& a) : x(a.x) {
         if (x == 42) {
@@ -15,7 +15,7 @@ struct A {
         }
     }
 
-    A(A&& Other) noexcept : x(Other.x) {}
+    A(A&& Other) noexcept : x(Other.x) { }
 
     void operator()() const noexcept {
         std::printf("%d\n", x);
@@ -35,8 +35,7 @@ int main() {
         stdx::ScopeSuccess s2(std::cref(a2));
         stdx::ScopeFail s3(a3);
         a2.x = 56;
-    } catch (...) {
-    }
+    } catch (...) { }
 
     std::string a = "hello", b = "world";
     auto x = [](std::string& p) {

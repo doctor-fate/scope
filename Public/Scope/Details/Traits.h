@@ -18,7 +18,7 @@ namespace stdx::details {
     using RemoveCVRef = std::remove_reference_t<std::remove_cv_t<T>>;
 
     template <typename... Ts>
-    struct TypePack {};
+    struct TypePack { };
 
     template <typename Base, typename U, bool = std::is_nothrow_constructible_v<Base, std::in_place_t, U>>
     struct ScopeConstructible {

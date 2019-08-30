@@ -30,7 +30,7 @@ namespace stdx {
             typename D2,
             bool NoExcept = noexcept(UniqueResource(std::declval<R2>(), std::declval<D2>(), true))>
         explicit UniqueResource(R2 && Resource, D2 && Destruct) noexcept(NoExcept) :
-            UniqueResource(std::forward<R2>(Resource), std::forward<D2>(Destruct), true) {}
+            UniqueResource(std::forward<R2>(Resource), std::forward<D2>(Destruct), true) { }
 
         [[nodiscard]] decltype(auto) Get() const noexcept {
             return Super::Resource().Get();
@@ -140,7 +140,7 @@ namespace stdx {
             Super(
                 std::forward_as_tuple(std::in_place, std::forward<typename CR::Type>(Resource)),
                 std::forward_as_tuple(std::in_place, std::forward<typename CD::Type>(Destruct)),
-                bExecuteOnReset) {}
+                bExecuteOnReset) { }
     };
 
     template <typename R, typename D>
@@ -150,7 +150,8 @@ namespace stdx {
     UniqueResource(R, D, bool)->UniqueResource<R, D>;
 
     template <typename R, typename D, typename S = std::decay_t<R>>
-    [[nodiscard]] auto MakeUniqueResourceChecked(R&& Resource, const S& Sentinel, D&& Destruct) MAKE_UNIQUE_RESOURCE_CHECKED_NOEXCEPT(R, D) {
+    [[nodiscard]] auto MakeUniqueResourceChecked(R&& Resource, const S& Sentinel, D&& Destruct)
+        MAKE_UNIQUE_RESOURCE_CHECKED_NOEXCEPT(R, D) {
         return UniqueResource(std::forward<R>(Resource), std::forward<D>(Destruct), !bool(Resource == Sentinel));
     }
 }

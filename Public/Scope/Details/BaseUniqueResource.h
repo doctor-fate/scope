@@ -44,7 +44,7 @@ namespace stdx::details {
         BaseUniqueResource(std::tuple<T1...>&& Resource, std::tuple<T2...>&& Destruct, bool bExecuteOnReset) noexcept(
             IsNoExceptConstructible(details::TypePack<T1...>{}, details::TypePack<T2...>{})) :
             Data(std::piecewise_construct, std::move(Resource), std::move(Destruct)),
-            bExecuteOnReset(bExecuteOnReset) {}
+            bExecuteOnReset(bExecuteOnReset) { }
 
         BaseUniqueResource(const BaseUniqueResource&) = delete;
 
@@ -121,7 +121,7 @@ namespace stdx::details {
             Super(
                 std::forward_as_tuple(std::move(Other.Resource())),
                 std::forward_as_tuple(std::move(Other.Destruct()), GetSafeScope(Other)),
-                std::exchange(Other.bExecuteOnReset, false)) {}
+                std::exchange(Other.bExecuteOnReset, false)) { }
 
         UniqueResourceMove& operator=(UniqueResourceMove&&) = default;
 
@@ -148,7 +148,7 @@ namespace stdx::details {
             Super(
                 std::forward_as_tuple(std::move(Other.Resource())),
                 std::forward_as_tuple(std::move(Other.Destruct())),
-                std::exchange(Other.bExecuteOnReset, false)) {}
+                std::exchange(Other.bExecuteOnReset, false)) { }
 
         UniqueResourceMove& operator=(UniqueResourceMove&&) = default;
     };

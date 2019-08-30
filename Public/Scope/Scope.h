@@ -17,9 +17,7 @@ namespace stdx {
             typename std::enable_if_t<!std::is_same_v<details::RemoveCVRef<U>, ScopeExit> && Constructible::Enable, int> = 0>
         explicit ScopeExit(U&& Function) noexcept(Constructible::NoExcept) try : Super(std::in_place, std::forward<F>(Function)) {
             static_assert(std::is_invocable_v<U&>);
-        } catch (...) {
-            std::invoke(Function);
-        }
+        } catch (...) { std::invoke(Function); }
     };
 
     template <typename T>
@@ -55,9 +53,7 @@ namespace stdx {
             typename std::enable_if_t<!std::is_same_v<details::RemoveCVRef<U>, ScopeFail> && Constructible::Enable, int> = 0>
         explicit ScopeFail(U&& Function) noexcept(Constructible::NoExcept) try : Super(std::in_place, std::forward<F>(Function)) {
             static_assert(std::is_invocable_v<U&>);
-        } catch (...) {
-            std::invoke(Function);
-        }
+        } catch (...) { std::invoke(Function); }
     };
 
     template <typename T>

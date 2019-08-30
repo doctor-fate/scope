@@ -9,9 +9,9 @@
 namespace stdx::tests {
     struct ThrowCopyCallable {
         template <typename T>
-        explicit ThrowCopyCallable(T Function) noexcept : ThrowCopyCallable(true, std::invoke(Function)) {}
+        explicit ThrowCopyCallable(T Function) noexcept : ThrowCopyCallable(true, std::invoke(Function)) { }
 
-        explicit ThrowCopyCallable(bool bThrow, std::uint8_t& bWasCalled) noexcept : bThrow(bThrow), bWasCalled(bWasCalled) {}
+        explicit ThrowCopyCallable(bool bThrow, std::uint8_t& bWasCalled) noexcept : bThrow(bThrow), bWasCalled(bWasCalled) { }
 
         ThrowCopyCallable(const ThrowCopyCallable& Other) : bThrow(Other.bThrow), bWasCalled(Other.bWasCalled) {
             if (bThrow) {
@@ -150,8 +150,7 @@ namespace stdx::tests {
                 try {
                     ScopeSuccess Scope([&bWasCalled]() { bWasCalled = true; });
                     throw std::logic_error{"oops"};
-                } catch (...) {
-                }
+                } catch (...) { }
             }
             ASSERT_FALSE(bWasCalled);
         }
@@ -217,8 +216,7 @@ namespace stdx::tests {
                 try {
                     ScopeFail Scope([&bWasCalled]() { bWasCalled = true; });
                     throw std::logic_error{"oops"};
-                } catch (...) {
-                }
+                } catch (...) { }
             }
             ASSERT_TRUE(bWasCalled);
         }
