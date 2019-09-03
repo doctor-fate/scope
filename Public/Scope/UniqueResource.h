@@ -64,71 +64,27 @@ namespace stdx {
             typename D2,
             typename CR = details::ResourceConstructible<TResource, R2>,
             typename CD = details::ResourceConstructible<TDestruct, D2>,
-            typename std::enable_if_t<CR::Enable && CD::Enable && !CR::NoExcept && !CD::NoExcept, int> = 0>
-        explicit UniqueResource(R2 && Resource, D2 && Destruct, bool bExecuteOnReset) :
-            Super(
-                std::forward_as_tuple(
-                    std::in_place,
-                    std::forward<typename CR::Type>(Resource),
-                    ScopeExit([&Resource, &Destruct, bExecuteOnReset]() {
-                        if (bExecuteOnReset) {
-                            std::invoke(Destruct, Resource);
-                        }
-                    })),
-                std::forward_as_tuple(
-                    std::in_place,
-                    std::forward<typename CD::Type>(Destruct),
-                    ScopeExit([this, &Destruct, bExecuteOnReset]() {
-                        if (bExecuteOnReset) {
-                            std::invoke(Destruct, this->Resource().Get());
-                        }
-                    })),
-                bExecuteOnReset) {
-            static_assert(std::is_invocable_v<D2&, R2>);
-            static_assert(std::is_invocable_v<D2&, decltype(std::declval<TResource&>().Get())>);
-        }
-
-        template <
-            typename R2,
-            typename D2,
-            typename CR = details::ResourceConstructible<TResource, R2>,
-            typename CD = details::ResourceConstructible<TDestruct, D2>,
-            typename std::enable_if_t<CR::Enable && CD::Enable && CR::NoExcept && !CD::NoExcept, int> = 0>
+            typename std::enable_if_t<CR::Enable && CD::Enable && !(CR::NoExcept && CD::NoExcept), int> = 0>
         explicit UniqueResource(R2 && Resource, D2 && Destruct, bool bExecuteOnReset) :
             Super(
                 std::forward_as_tuple(std::in_place, std::forward<typename CR::Type>(Resource)),
                 std::forward_as_tuple(
                     std::in_place,
                     std::forward<typename CD::Type>(Destruct),
-                    ScopeExit([this, &Destruct, bExecuteOnReset]() {
+                    ScopeExit([this, &Resource, &Destruct, bExecuteOnReset]() {
                         if (bExecuteOnReset) {
-                            std::invoke(Destruct, this->Resource().Get());
+                            if constexpr (CR::NoExcept) {
+                                static_assert(
+                                    CR::NoExcept && std::is_invocable_v<D2&, decltype(std::declval<TResource&>().Get())>);
+                                std::invoke(Destruct, this->Resource().Get());
+                            } else {
+                                static_assert(!CR::NoExcept && std::is_invocable_v<D2&, R2>);
+                                std::invoke(Destruct, Resource);
+                            }
+                            (void) Resource, (void) this;
                         }
                     })),
-                bExecuteOnReset) {
-            static_assert(std::is_invocable_v<D2&, decltype(std::declval<TResource&>().Get())>);
-        }
-
-        template <
-            typename R2,
-            typename D2,
-            typename CR = details::ResourceConstructible<TResource, R2>,
-            typename CD = details::ResourceConstructible<TDestruct, D2>,
-            typename std::enable_if_t<CR::Enable && CD::Enable && !CR::NoExcept && CD::NoExcept, int> = 0>
-        explicit UniqueResource(R2 && Resource, D2 && Destruct, bool bExecuteOnReset) :
-            Super(
-                std::forward_as_tuple(
-                    std::in_place,
-                    std::forward<typename CR::Type>(Resource),
-                    ScopeExit([&Resource, &Destruct, bExecuteOnReset]() {
-                        if (bExecuteOnReset) {
-                            std::invoke(Destruct, Resource);
-                        }
-                    })),
-                std::forward_as_tuple(std::in_place, std::forward<typename CD::Type>(Destruct)),
-                bExecuteOnReset) {
-            static_assert(std::is_invocable_v<D2&, R2>);
-        }
+                bExecuteOnReset) { }
 
         template <
             typename R2,

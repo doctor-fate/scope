@@ -121,7 +121,9 @@ namespace stdx::details {
             Super(
                 std::forward_as_tuple(std::move(Other.Resource())),
                 std::forward_as_tuple(std::move(Other.Destruct()), GetSafeScope(Other)),
-                std::exchange(Other.bExecuteOnReset, false)) { }
+                false) {
+            Super::bExecuteOnReset = std::exchange(Other.bExecuteOnReset, false);
+        }
 
         UniqueResourceMove& operator=(UniqueResourceMove&&) = default;
 

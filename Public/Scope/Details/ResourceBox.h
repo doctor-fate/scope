@@ -116,8 +116,8 @@ namespace stdx::details {
         static_assert(std::is_nothrow_move_constructible_v<Type> || std::is_copy_constructible_v<Type>);
         static_assert(std::is_destructible_v<Type>);
 
-        template <typename U, typename std::enable_if_t<std::is_assignable_v<Type, U>, int> = 0>
-        ResourceBox& operator=(U&& Value) noexcept(std::is_nothrow_assignable_v<Type, U>) {
+        template <typename U, typename std::enable_if_t<std::is_assignable_v<Type&, U>, int> = 0>
+        ResourceBox& operator=(U&& Value) noexcept(std::is_nothrow_assignable_v<Type&, U>) {
             Super::Data = std::forward<U>(Value);
             return *this;
         }

@@ -44,12 +44,11 @@ if (ENABLE_TESTS)
                 -Werror -Wall -Wextra -Wpedantic -Wconversion -Wno-sign-conversion
                 -Wold-style-cast -Wcovered-switch-default -Wundefined-func-template
                 -Wnarrowing -Wundefined-reinterpret-cast -Wredundant-parens
-                -Wmissing-exception-spec -Wundef -Wpointer-arith -Wshadow-all -Wno-shadow-field-in-constructor)
+                -Wmissing-exception-spec -Wundef -Wpointer-arith -Wshadow -Wshadow-uncaptured-local)
     endif ()
 
-    add_executable(scope-test tests/Scope.cpp)
-    target_compile_options(scope-test PRIVATE ${PEDANTIC_COMPILE_FLAGS} #[[-fprofile-instr-generate -fcoverage-mapping]])
-    #[[target_link_options(scope-test PRIVATE -fprofile-instr-generate -fcoverage-mapping)]]
+    add_executable(scope-test tests/Scope.cpp tests/UniqueResource.cpp)
+    target_compile_options(scope-test PRIVATE ${PEDANTIC_COMPILE_FLAGS})
     target_link_libraries(scope-test PRIVATE scope gtest_main)
     add_test(NAME scope COMMAND scope-test)
 endif ()

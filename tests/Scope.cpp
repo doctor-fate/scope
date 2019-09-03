@@ -6,7 +6,7 @@
 
 #include <Scope/Scope.h>
 
-namespace stdx::tests {
+namespace {
     struct ThrowCopyCallable {
         template <typename T>
         explicit ThrowCopyCallable(T Function) noexcept : ThrowCopyCallable(true, std::invoke(Function)) { }
@@ -26,7 +26,9 @@ namespace stdx::tests {
         bool bThrow;
         std::uint8_t& bWasCalled;
     };
+}
 
+namespace stdx::tests {
     TEST(Scope, ScopeExit) {
         {
             bool bWasCalled = false;
@@ -124,6 +126,15 @@ namespace stdx::tests {
             }
             ASSERT_EQ(bWasCalled, 0);
         }
+
+        {
+            std::uint8_t bWasCalled = 0;
+            {
+                ScopeExit Scope1([&bWasCalled]() { ++bWasCalled; });
+                ScopeExit Scope2 = std::move(Scope1);
+            }
+            ASSERT_EQ(bWasCalled, 1);
+        }
     }
 
     TEST(Scope, ScopeSuccess) {
@@ -204,7 +215,7 @@ namespace stdx::tests {
         {
             bool bWasCalled = false;
             {
-                ScopeSuccess Scope([&bWasCalled]() { bWasCalled = true; });
+                ScopeFail Scope([&bWasCalled]() { bWasCalled = true; });
                 Scope.Release();
             }
             ASSERT_FALSE(bWasCalled);

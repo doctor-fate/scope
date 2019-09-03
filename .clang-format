@@ -72,12 +72,12 @@ SpaceInEmptyBlock: true
 IncludeCategories:
     - Regex:           '<gtest/.+>|"gtest/.+"'
       Priority:        2
-    - Regex:           '<[a-z_]+>'
-      Priority:        1
     - Regex:           '<Scope/.+\.h>'
       Priority:        3
     - Regex:           '"Scope/.+\.h"'
       Priority:        4
+    - Regex:           '<[a-z_]+>'
+      Priority:        1
     - Regex:           '.*'
       Priority:        5
 ...
